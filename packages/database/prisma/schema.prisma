@@ -1,0 +1,155 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model attributes_name {
+  id               String             @id(map: "AttributesName_pkey") @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  created_at       DateTime           @default(now())
+  updated_at       DateTime
+  name             String?
+  product_id       String?            @db.Uuid
+  product          product?           @relation(fields: [product_id], references: [id], map: "AttributesName_productId_fkey")
+  attributes_value attributes_value[]
+}
+
+model attributes_value {
+  id                 String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  created_at         DateTime         @default(now())
+  updated_at         DateTime
+  value              String?
+  attributes_name_id String?          @db.Uuid
+  attributes_name    attributes_name? @relation(fields: [attributes_name_id], references: [id])
+}
+
+model images {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  created_at DateTime @default(now())
+  updated_at DateTime
+  image_url  String
+  product_id String?  @db.Uuid
+  product    product? @relation(fields: [product_id], references: [id])
+
+  @@unique([product_id, image_url])
+}
+
+model pfve {
+  created_at               DateTime  @default(now())
+  updated_at               DateTime
+  purchasing_family_code   String    @unique
+  purchasing_family_1      String
+  purchasing_family_1_code String
+  purchasing_family_2      String
+  purchasing_family_2_code String
+  id                       String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  product                  product[]
+  unspsc                   unspsc[]
+
+  @@unique([id, purchasing_family_code])
+}
+
+model prices {
+  unit_quantity Float?   @default(1)
+  unit          String?  @default("EA")
+  updated_at    DateTime
+  public        Float
+  lower_bound   Float
+  higher_bound  Float
+  discount      Float
+  created_at    DateTime @default(now())
+  id            String   @id(map: "Prices_pkey") @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  product_id    String?  @db.Uuid
+  product       product? @relation(fields: [product_id], references: [id], map: "Prices_productId_fkey")
+}
+
+model product {
+  id               String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  created_at       DateTime          @default(now())
+  updated_at       DateTime
+  name             String?
+  description      String
+  supplier         String
+  supplier_ref     String
+  manufacturer     String
+  manufacturer_ref String?
+  packsize         Int
+  unspsc_code      String?
+  pfve_code        String?
+  pfve_id          String?           @db.Uuid
+  unspsc_id        String?           @db.Uuid
+  attributes_name  attributes_name[]
+  images           images[]
+  prices           prices[]
+  pfve             pfve?             @relation(fields: [pfve_id, pfve_code], references: [id, purchasing_family_code])
+  unspsc           unspsc?           @relation(fields: [unspsc_id, unspsc_code], references: [id, commodity_level_unspsc])
+  stocks           stocks[]
+
+  @@unique([supplier, supplier_ref])
+}
+
+model stocks {
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  created_at     DateTime @default(now())
+  updated_at     DateTime
+  count_in_stock Int?
+  product_id     String?  @db.Uuid
+  product        product? @relation(fields: [product_id], references: [id])
+
+  @@unique([product_id, count_in_stock])
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by the Prisma Client.
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by the Prisma Client.
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by the Prisma Client.
+model temp_attributes_value {
+  id                 String?
+  created_at         String?
+  updated_at         String?
+  value              String?
+  attributes_name_id String?
+
+  @@ignore
+}
+
+model unspsc {
+  id                     String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  created_at             DateTime  @default(now())
+  updated_at             DateTime
+  segment_level_name     String
+  segment_level_unspsc   String
+  family_level_name      String?
+  class_level_name       String?
+  class_level_unspsc     String
+  commodity_level_name   String?
+  commodity_level_unspsc String    @unique
+  family_level_unspsc    String
+  pfve_id                String?   @db.Uuid
+  product                product[]
+  pfve                   pfve?     @relation(fields: [pfve_id], references: [id])
+
+  @@unique([id, commodity_level_unspsc])
+  @@unique([id, pfve_id])
+}
+
+model user {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  created_at  DateTime @default(now())
+  updated_at  DateTime
+  email       String   @unique
+  username    String   @unique(map: "User_userName_key")
+  password    String
+  is_active   Boolean? @default(true)
+  is_verified Boolean  @default(true)
+  role        Role     @default(USER)
+}
+
+enum Role {
+  USER
+  ADMIN
+  CLIENT
+  SUPPLIER
+}

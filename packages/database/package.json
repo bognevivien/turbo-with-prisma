@@ -1,0 +1,17 @@
+{
+  "name": "database",
+  "main": "./index.ts",
+  "types": "./index.ts",
+  "scripts": {
+    "db:generate": "prisma generate",
+    "db:push": "prisma db push --skip-generate",
+    "db:pull": "prisma db pull"
+  },
+  "dependencies": {
+    "@prisma/client": "4.7.0"
+  },
+  "devDependencies": {
+    "@types/node": "^17.0.12",
+    "prisma": "4.7.0"
+  }
+}
